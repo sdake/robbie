@@ -1,0 +1,20 @@
+[package]
+name = "robbie"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12.7", features = ["json"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+crossterm = { version = "0.27", features = ["bracketed-paste", "events"] }
+anyhow = "1.0.87"
+toml = "0.5.8"
+
+# Perhaps will add dialog encryption stored in local disk
+#termion = "4.0.2"
+#aes-gcm = "0.10.3"
+#hmac = "0.12.1"
+#sha2 = "0.10.8"
+#keychain-services = "0.1.1"
