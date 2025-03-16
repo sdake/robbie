@@ -81,7 +81,9 @@ async fn main() -> Result<()> {
         .build()?;
 
     // Request list of models
-    let response = client.get(&models_url).send().await?;
+    let response = client.get(&models_url)
+        .header("Authorization", "Bearer robbie")
+        .send().await?;
 
     if !response.status().is_success() {
         println!("Failed to retrieve models. Status: {}", response.status());
@@ -107,7 +109,7 @@ async fn main() -> Result<()> {
     // create a dialog representing all turns of the conversation
     let mut dialog = Dialog::new("primary_thread".to_string());
 
-    dialog.add(Role::System, String::from(
+    dialog.add(Role::user, String::from(
         "You are Robbie, my trusted personal engineering assistant. \
         You love system engineering. You should spend your time analyzing \
         code if presented with code, and you should use the resources of \
@@ -119,7 +121,7 @@ async fn main() -> Result<()> {
         let user_content = input::read_user_input().await?;
 
         // Add user input as a new dialog turn
-        dialog.add(Role::User, user_content.clone());
+        dialog.add(Role::user, user_content.clone());
 
         let request_payload = ChatCompletionRequest {
             model: model.id.clone(),
@@ -137,6 +139,7 @@ async fn main() -> Result<()> {
 
         let response = client
             .post(&completions_url)
+            .header("Authorization", "Bearer robbie")
             .json(&request_payload)
             .send()
             .await?;
@@ -157,8 +160,8 @@ async fn main() -> Result<()> {
             assistant_response.push(' ');
         }
 
-        // Add assistant response as a new dialog turn
-        dialog.add(Role::Assistant, assistant_response.clone());
+        // Add model response as a new dialog turn
+        dialog.add(Role::model, assistant_response.clone());
 
         println!("Robbie: {}", assistant_response);
     }

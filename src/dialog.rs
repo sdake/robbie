@@ -1,11 +1,8 @@
 // The role for a turn
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Role {
-    System,
-    User,
-    Assistant,
-    #[allow(dead_code)]
-    IPython,
+    model,
+    user,
 }
 
 // A turn is one interaction of a role's conversation content
@@ -38,23 +35,22 @@ impl Dialog {
     pub fn format(&self) -> String {
         let mut formatted_dialog = String::new();
 
-        // Add the metadata header
-        formatted_dialog.push_str("<|begin_of_text|>\n");
+// `gemma-3`:
+// <start_of_turn>user
+// What is Cramer's Rule?<end_of_turn>
+// <start_of_turn>model
+// Cramer's Rule is ...<end_of_turn>
 
         // Add each turn in the dialog
         for turn in self.turns.iter() {
             formatted_dialog.push_str(&format!(
-                "<|start_header_id|>{:?}<|end_header_id|>\n\n{}<|eot_id|>\n",
+                "<start_of_turn>{:?}\n{}<end_of_turn>\n",
                 turn.role,
                 turn.content
             ));
         }
 
-	// Llama 3.1 docs state that a new header of type Assistant be added to the end
-        // of the formatted text. This is not stored in the Dialog. Instead, when the API
-        // returns an asistant message, it is added via Dialog.add(). However, to prompt
-        // the assistant, we add a header id with the Assistant message.
-        formatted_dialog.push_str("<|start_header_id|>Assistant<|end_header_id|>\n\n");
+        formatted_dialog.push_str("<start_of_turn>model<end_of_turn>\n");
 
         formatted_dialog
     }

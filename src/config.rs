@@ -27,7 +27,7 @@ impl Config {
             title: Title {
                 name: "robbie".to_string(),
             },
-            base_url: "http://98.165.69.213:8080".to_string(),
+            base_url: "http://a40x2.local:8080".to_string(),
             frequency_penalty: 0.0,
             max_tokens: 4096,
             presence_penalty: 0.0,
