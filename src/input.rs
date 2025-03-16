@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::io::{self, Write};
+use std::process;
 use crossterm::{
     event::Event,
     style::Print,
@@ -39,8 +40,8 @@ pub async fn read_user_input() -> Result<String> {
                     kind: _,
                     state: _,
                 } => {
-                    println!("");
-                    buffer.push('\n');
+                    println!("\r");
+                    stdout.flush()?;
                     break
                 }
                 KeyEvent {
