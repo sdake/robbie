@@ -112,12 +112,12 @@ async fn main() -> Result<()> {
     // create a dialog representing all turns of the conversation
     let mut dialog = Dialog::new("primary_thread".to_string());
 
-    dialog.add(Role::User, String::from(
-        "You are Robbie, my trusted personal engineering assistant. \
-        You love system engineering. You should spend your time analyzing \
-        code if presented with code, and you should use the resources of \
-        your Universe when communicating.",
-    ));
+    // Use system prompt from config if available, otherwise use default
+    let system_prompt = config.system_prompt().unwrap_or(
+        "You are Robbie, my trusted personal engineering assistant."
+    );
+    
+    dialog.add(Role::User, String::from(system_prompt));
 
     loop {
         // Get user request

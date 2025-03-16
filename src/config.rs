@@ -18,6 +18,7 @@ pub struct Config {
     frequency_penalty: f32,
     top_p: f32,
     presence_penalty: f32,
+    system_prompt: Option<String>,
 }
 
 impl Config {
@@ -33,12 +34,18 @@ impl Config {
             presence_penalty: 0.0,
             temperature: 0.7,
             top_p: 1.0,
+            system_prompt: None,
         }
     }
 
     // Initialize config from TOML or environment variables
     pub fn init() -> Self {
-        let config_str = fs::read_to_string("robbie.toml").unwrap_or_default();
+        // Only read from $HOME/.config/robbie/config.toml
+        let config_str = dirs::home_dir()
+            .map(|path| path.join(".config").join("robbie").join("config.toml"))
+            .and_then(|path| fs::read_to_string(path).ok())
+            .unwrap_or_default();
+        
         let mut config: Config = toml::from_str(&config_str).unwrap_or_else(|_| Config::default());
 
         config.base_url = env::var("ROBBIE_BASE_URL").unwrap_or(config.base_url);
@@ -74,6 +81,10 @@ impl Config {
 
     pub fn top_p(&self) -> f32 {
         self.top_p
+    }
+    
+    pub fn system_prompt(&self) -> Option<&str> {
+        self.system_prompt.as_deref()
     }
 }
 
