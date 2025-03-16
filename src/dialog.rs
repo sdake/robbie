@@ -52,12 +52,6 @@ impl Dialog {
     pub fn format(&self) -> String {
         let mut formatted_dialog = String::new();
 
-        // Format for gemma-3:
-        // <start_of_turn>user
-        // What is Cramer's Rule?<end_of_turn>
-        // <start_of_turn>model
-        // Cramer's Rule is ...<end_of_turn>
-
         for turn in self.turns.iter() {
             let role_str = match turn.role {
                 Role::User => "user",
