@@ -26,7 +26,6 @@ struct Model {
     owned_by: String,
     parent: Option<String>,
     permission: Vec<Permission>,
-    root: String,
 }
 
 #[allow(dead_code)]
@@ -76,8 +75,13 @@ async fn main() -> Result<()> {
     let models_url = format!("{}/v1/models", config.base_url());
     let completions_url = format!("{}/v1/completions", config.base_url());
 
+    // Create a client with no TLS certificate verification
+    let client = Client::builder()
+        .danger_accept_invalid_certs(true)
+        .build()?;
+
     // Request list of models
-    let response = reqwest::get(&models_url).await?;
+    let response = client.get(&models_url).send().await?;
 
     if !response.status().is_success() {
         println!("Failed to retrieve models. Status: {}", response.status());
@@ -127,7 +131,10 @@ async fn main() -> Result<()> {
             presence_penalty: config.presence_penalty(),
         };
 
-        let client = Client::new();
+        let client = Client::builder()
+            .danger_accept_invalid_certs(true)
+            .build()?;
+
         let response = client
             .post(&completions_url)
             .json(&request_payload)
