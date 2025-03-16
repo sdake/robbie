@@ -109,7 +109,7 @@ async fn main() -> Result<()> {
     // create a dialog representing all turns of the conversation
     let mut dialog = Dialog::new("primary_thread".to_string());
 
-    dialog.add(Role::user, String::from(
+    dialog.add(Role::User, String::from(
         "You are Robbie, my trusted personal engineering assistant. \
         You love system engineering. You should spend your time analyzing \
         code if presented with code, and you should use the resources of \
@@ -121,7 +121,7 @@ async fn main() -> Result<()> {
         let user_content = input::read_user_input().await?;
 
         // Add user input as a new dialog turn
-        dialog.add(Role::user, user_content.clone());
+        dialog.add(Role::User, user_content.clone());
 
         let request_payload = ChatCompletionRequest {
             model: model.id.clone(),
@@ -161,7 +161,7 @@ async fn main() -> Result<()> {
         }
 
         // Add model response as a new dialog turn
-        dialog.add(Role::model, assistant_response.clone());
+        dialog.add(Role::Model, assistant_response.clone());
 
         println!("Robbie: {}", assistant_response);
     }
