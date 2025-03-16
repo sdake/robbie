@@ -8,6 +8,9 @@ use dialog::{Dialog, Role};
 use anyhow::{Context, Result};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+use tokio::signal;
+use tokio::sync::{Mutex, oneshot};
 
 #[derive(Debug, Deserialize)]
 struct ResponseModels {
@@ -137,22 +140,73 @@ async fn main() -> Result<()> {
             .danger_accept_invalid_certs(true)
             .build()?;
 
-        let response = client
+        println!("Generating response... (Press Ctrl+C to interrupt)");
+        
+        // Create a channel for cancellation
+        let (cancel_tx, cancel_rx) = oneshot::channel();
+        
+        // Spawn a task to handle Ctrl+C
+        let cancel_tx = Arc::new(Mutex::new(Some(cancel_tx)));
+        let ctrl_c_tx = cancel_tx.clone();
+        
+        tokio::spawn(async move {
+            if let Ok(_) = signal::ctrl_c().await {
+                println!("\nInference interrupted by user.");
+                if let Some(tx) = ctrl_c_tx.lock().await.take() {
+                    let _ = tx.send(());
+                }
+            }
+        });
+        
+        // Prepare the request
+        let request = client
             .post(&completions_url)
             .header("Authorization", "Bearer robbie")
             .json(&request_payload)
-            .send()
-            .await?;
-
+            .build()?;
+            
+        // Create a response future that can be cancelled
+        let response_future = client.execute(request);
+        
+        // Wait for either response or cancellation
+        let response = tokio::select! {
+            response = response_future => {
+                match response {
+                    Ok(resp) => resp,
+                    Err(e) => {
+                        println!("Request error: {}", e);
+                        return Ok(());
+                    }
+                }
+            }
+            _ = cancel_rx => {
+                return Ok(());
+            }
+        };
+        
         if !response.status().is_success() {
             println!("Failed to make request. Status: {}", response.status());
             return Ok(());
         }
-
-        let response_data: ChatCompletionResponse = response
-            .json()
-            .await
-            .context("Failed to deserialize JSON response")?;
+        
+        // Parse the JSON response with cancellation support
+        let json_future = response.json::<ChatCompletionResponse>();
+        
+        let response_data = tokio::select! {
+            json_result = json_future => {
+                match json_result {
+                    Ok(data) => data,
+                    Err(e) => {
+                        println!("Failed to deserialize JSON response: {}", e);
+                        return Ok(());
+                    }
+                }
+            }
+            _ = signal::ctrl_c() => {
+                println!("\nJSON parsing interrupted by user.");
+                return Ok(());
+            }
+        };
 
         let mut assistant_response = String::new();
         for choice in response_data.choices.iter() {
